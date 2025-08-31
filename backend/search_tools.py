@@ -88,7 +88,7 @@ class CourseSearchTool(Tool):
     def _format_results(self, results: SearchResults) -> str:
         """Format search results with course and lesson context"""
         formatted = []
-        sources = []  # Track sources for the UI
+        sources = []  # Track sources for the UI with links
         
         for doc, meta in zip(results.documents, results.metadata):
             course_title = meta.get('course_title', 'unknown')
@@ -100,12 +100,25 @@ class CourseSearchTool(Tool):
                 header += f" - Lesson {lesson_num}"
             header += "]"
             
-            # Track source for the UI
-            source = course_title
-            if lesson_num is not None:
-                source += f" - Lesson {lesson_num}"
-            sources.append(source)
+            # Track source for the UI with embedded links
+            source_data = {
+                "display": course_title,
+                "link": None
+            }
             
+            if lesson_num is not None:
+                source_data["display"] += f" - Lesson {lesson_num}"
+                # Get lesson link from vector store
+                lesson_link = self.store.get_lesson_link(course_title, lesson_num)
+                if lesson_link:
+                    source_data["link"] = lesson_link
+            else:
+                # For course-level citations without specific lesson, get course link
+                course_link = self.store.get_course_link(course_title)
+                if course_link:
+                    source_data["link"] = course_link
+            
+            sources.append(source_data)
             formatted.append(f"{header}\n{doc}")
         
         # Store sources for retrieval
