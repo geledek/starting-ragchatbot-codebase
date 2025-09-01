@@ -61,13 +61,76 @@ Required `.env` file in root:
 ANTHROPIC_API_KEY=your_api_key_here
 ```
 
+## System Workflow Diagram
+
+```
+┌─────────────────┐    ┌────────────────────┐    ┌─────────────────────┐
+│   User Query    │────│   RAG System      │────│   AI Generator      │
+│                 │    │   (Orchestrator)   │    │   (Claude API)      │
+└─────────────────┘    └────────────────────┘    └─────────────────────┘
+                                │                            │
+                                │                            │
+                       ┌────────▼────────┐                  │
+                       │  Tool Manager   │                  │
+                       │                 │                  │
+                       └─────────────────┘                  │
+                                │                            │
+                    ┌───────────┼───────────┐               │
+                    │           │           │               │
+            ┌───────▼──────┐    │    ┌──────▼──────────┐   │
+            │Content Search│    │    │Course Outline   │   │
+            │Tool          │    │    │Tool             │   │
+            └──────────────┘    │    └─────────────────┘   │
+                    │           │           │               │
+                    └───────────┼───────────┘               │
+                                │                            │
+                       ┌────────▼────────┐                  │
+                       │  Vector Store   │                  │
+                       │   (ChromaDB)    │                  │
+                       └─────────────────┘                  │
+                                │                            │
+                    ┌───────────┼───────────┐               │
+                    │           │           │               │
+            ┌───────▼──────┐    │    ┌──────▼──────────┐   │
+            │Course Content│    │    │Course Catalog   │   │
+            │Collection    │    │    │Collection       │   │
+            │(Chunks)      │    │    │(Metadata)       │   │
+            └──────────────┘    │    └─────────────────┘   │
+                                │                            │
+                                └────────────────────────────┘
+
+Query Types & Tool Selection:
+┌─────────────────────────────────────────────────────────────────┐
+│  Query Type              →  Tool Used                           │
+├─────────────────────────────────────────────────────────────────┤
+│  "What's in course X?"   →  get_course_outline                 │
+│  "Course outline"        →  get_course_outline                 │
+│  "List lessons"          →  get_course_outline                 │
+│                                                                 │
+│  "Explain concept Y"     →  search_course_content              │
+│  "How does Z work?"      →  search_course_content              │
+│  "Details about topic"   →  search_course_content              │
+└─────────────────────────────────────────────────────────────────┘
+```
+
 ## Data Flow
 
+### Document Ingestion Flow
 1. Documents are processed and chunked in `document_processor.py`
-2. Chunks are stored in ChromaDB via `vector_store.py`
-3. User queries trigger tool-based search through `search_tools.py`
-4. Claude generates responses using retrieved context via `ai_generator.py`
-5. Conversation history is managed by `session_manager.py`
+2. Course metadata stored in ChromaDB `course_catalog` collection
+3. Content chunks stored in ChromaDB `course_content` collection
+4. Both collections indexed with sentence embeddings
+
+### Query Processing Flow
+1. User query received by `rag_system.py`
+2. Claude AI analyzes query type via `ai_generator.py`
+3. **Tool Selection**:
+   - **Outline queries** → `CourseOutlineTool` → `course_catalog` collection
+   - **Content queries** → `CourseSearchTool` → `course_content` collection
+4. Tool executes semantic search in appropriate ChromaDB collection
+5. Results formatted and returned to Claude for response generation
+6. Final response delivered to user with source links
+7. Conversation history managed by `session_manager.py`
 
 ## Key Dependencies
 
