@@ -242,7 +242,7 @@ class TestCourseOutlineTool:
         
         # Mock catalog data without links
         catalog_data = {
-            'metadatas': [[{
+            'metadatas': [{
                 'title': 'Test Course',
                 'instructor': 'Test Instructor',
                 'course_link': None,  # No course link
@@ -254,7 +254,7 @@ class TestCourseOutlineTool:
                     }
                 ]),
                 'lesson_count': 1
-            }]]
+            }]
         }
         course_outline_tool.store.course_catalog.get = Mock(return_value=catalog_data)
         
@@ -269,13 +269,13 @@ class TestCourseOutlineTool:
         course_outline_tool.store._resolve_course_name = Mock(return_value="Test Course")
         
         catalog_data = {
-            'metadatas': [[{
+            'metadatas': [{
                 'title': 'Test Course',
                 'instructor': 'Test Instructor',
                 'course_link': None,
                 'lessons_json': "invalid json{",  # Malformed JSON
                 'lesson_count': 1
-            }]]
+            }]
         }
         course_outline_tool.store.course_catalog.get = Mock(return_value=catalog_data)
         

@@ -318,7 +318,7 @@ class TestRAGSystemQueryTypes:
             
             # Mock course catalog for outline tool
             catalog_data = {
-                'metadatas': [[ # Correct ChromaDB structure - list of lists
+                'metadatas': [ # List of metadata dictionaries
                     {
                         'title': 'Test Course',
                         'instructor': 'Test Instructor',
@@ -328,7 +328,7 @@ class TestRAGSystemQueryTypes:
                         ]),
                         'lesson_count': 1
                     }
-                ]]
+                ]
             }
             mock_vector_store.course_catalog.get.return_value = catalog_data
             

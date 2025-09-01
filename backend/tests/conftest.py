@@ -120,7 +120,7 @@ def mock_chroma_catalog_results():
     """Mock ChromaDB course catalog results"""
     return {
         'documents': [["MCP: Build Rich-Context AI Apps with Anthropic"]],
-        'metadatas': [[ # First level is per-query, second level is per-result
+        'metadatas': [ # List of metadata dictionaries
             {
                 'title': 'MCP: Build Rich-Context AI Apps with Anthropic',
                 'instructor': 'John Smith',
@@ -139,7 +139,7 @@ def mock_chroma_catalog_results():
                 ]),
                 'lesson_count': 2
             }
-        ]],
+        ],
         'ids': [["MCP: Build Rich-Context AI Apps with Anthropic"]]
     }
 

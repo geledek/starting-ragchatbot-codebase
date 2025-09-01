@@ -81,7 +81,7 @@ class TestAIGenerator:
         assert result == "Direct response without using tools."
 
     def test_generate_response_with_tool_use(self, ai_generator, mock_anthropic_client, tool_manager):
-        """Test response generation that uses tools"""
+        """Test response generation that uses tools (single round)"""
         # Mock initial response with tool use
         initial_response = Mock()
         tool_content = Mock()
@@ -93,10 +93,11 @@ class TestAIGenerator:
         initial_response.content = [tool_content]
         initial_response.stop_reason = "tool_use"
         
-        # Mock final response after tool execution
+        # Mock final response after tool execution (no more tool use)
         final_response = Mock()
         final_response.content = [Mock()]
         final_response.content[0].text = "Based on the course material, MCP stands for Model Context Protocol."
+        final_response.stop_reason = "end_turn"
         
         # Setup mock client to return different responses for each call
         ai_generator.client.messages.create = Mock(side_effect=[initial_response, final_response])
@@ -140,8 +141,8 @@ class TestAIGenerator:
         
         assert result == "Based on the course material, MCP stands for Model Context Protocol."
 
-    def test_multiple_tool_calls(self, ai_generator, mock_anthropic_client, tool_manager):
-        """Test handling multiple tool calls in one response"""
+    def test_multiple_tool_calls_single_round(self, ai_generator, mock_anthropic_client, tool_manager):
+        """Test handling multiple tool calls in one response (single round)"""
         # Mock initial response with multiple tool uses
         initial_response = Mock()
         
@@ -160,10 +161,11 @@ class TestAIGenerator:
         initial_response.content = [tool_content_1, tool_content_2]
         initial_response.stop_reason = "tool_use"
         
-        # Mock final response
+        # Mock final response (no more tool use)
         final_response = Mock()
         final_response.content = [Mock()]
         final_response.content[0].text = "Combined response from multiple tools."
+        final_response.stop_reason = "end_turn"
         
         ai_generator.client.messages.create = Mock(side_effect=[initial_response, final_response])
         
@@ -257,7 +259,7 @@ class TestAIGenerator:
         assert "get_course_outline" in system_content
         assert "Course outline queries" in system_content
         assert "Content search queries" in system_content
-        assert "One tool call per query maximum" in system_content
+        assert "Sequential tool calling" in system_content
 
     def test_api_parameters(self, ai_generator, mock_anthropic_client):
         """Test that API parameters are correctly set"""
@@ -304,6 +306,211 @@ class TestAIGenerator:
         # Should return graceful error message
         assert result == "I apologize, but I'm unable to access the necessary tools to answer your question right now."
 
+    def test_sequential_tool_calling_two_rounds(self, ai_generator, mock_anthropic_client, tool_manager):
+        """Test sequential tool calling across 2 rounds"""
+        # Round 1: Initial tool use
+        round1_response = Mock()
+        tool_content_1 = Mock()
+        tool_content_1.type = "tool_use"
+        tool_content_1.name = "search_course_content"
+        tool_content_1.id = "tool_123"
+        tool_content_1.input = {"query": "MCP"}
+        
+        round1_response.content = [tool_content_1]
+        round1_response.stop_reason = "tool_use"
+        
+        # Round 2: Follow-up tool use based on previous results
+        round2_response = Mock()
+        tool_content_2 = Mock()
+        tool_content_2.type = "tool_use"
+        tool_content_2.name = "get_course_outline"
+        tool_content_2.id = "tool_456"
+        tool_content_2.input = {"course_name": "MCP Introduction"}
+        
+        round2_response.content = [tool_content_2]
+        round2_response.stop_reason = "tool_use"
+        
+        # Final response after max rounds reached
+        final_response = Mock()
+        final_response.content = [Mock()]
+        final_response.content[0].text = "Based on the MCP course content and outline, here's a comprehensive answer."
+        final_response.stop_reason = "end_turn"
+        
+        # Mock client returns different responses for each call
+        ai_generator.client.messages.create = Mock(side_effect=[
+            round1_response, round2_response, final_response
+        ])
+        
+        # Mock tool executions
+        def mock_execute_tool(tool_name, **kwargs):
+            if tool_name == "search_course_content":
+                return "MCP stands for Model Context Protocol. It's covered in the MCP Introduction course."
+            elif tool_name == "get_course_outline":
+                return "MCP Introduction Course - Lessons 1-5 covering protocol basics."
+            return "Unknown tool"
+        
+        tool_manager.execute_tool = Mock(side_effect=mock_execute_tool)
+        
+        tools = [
+            {"name": "search_course_content", "description": "Search"},
+            {"name": "get_course_outline", "description": "Get outline"}
+        ]
+        
+        result = ai_generator.generate_response(
+            "What is MCP and what does the course cover?",
+            tools=tools,
+            tool_manager=tool_manager,
+            max_tool_rounds=2
+        )
+        
+        # Should make 3 API calls: 2 tool rounds + 1 final response
+        assert ai_generator.client.messages.create.call_count == 3
+        
+        # Verify both tools were executed
+        assert tool_manager.execute_tool.call_count == 2
+        tool_manager.execute_tool.assert_any_call("search_course_content", query="MCP")
+        tool_manager.execute_tool.assert_any_call("get_course_outline", course_name="MCP Introduction")
+        
+        # Verify message history accumulation
+        final_call = ai_generator.client.messages.create.call_args_list[2]
+        messages = final_call[1]["messages"]
+        
+        # Should have: user -> assistant tool1 -> user tool1_result -> assistant tool2 -> user tool2_result
+        assert len(messages) == 5
+        assert messages[0]["role"] == "user"  # Original query
+        assert messages[1]["role"] == "assistant"  # First tool use
+        assert messages[2]["role"] == "user"  # First tool result
+        assert messages[3]["role"] == "assistant"  # Second tool use  
+        assert messages[4]["role"] == "user"  # Second tool result
+        
+        assert result == "Based on the MCP course content and outline, here's a comprehensive answer."
+
+    def test_sequential_tool_calling_early_termination(self, ai_generator, mock_anthropic_client, tool_manager):
+        """Test sequential tool calling with early termination (no more tool use)"""
+        # Round 1: Tool use
+        round1_response = Mock()
+        tool_content = Mock()
+        tool_content.type = "tool_use"
+        tool_content.name = "search_course_content"
+        tool_content.id = "tool_123"
+        tool_content.input = {"query": "MCP"}
+        
+        round1_response.content = [tool_content]
+        round1_response.stop_reason = "tool_use"
+        
+        # Round 2: Final answer (no more tool use)
+        final_response = Mock()
+        final_response.content = [Mock()]
+        final_response.content[0].text = "MCP stands for Model Context Protocol based on the search results."
+        final_response.stop_reason = "end_turn"
+        
+        ai_generator.client.messages.create = Mock(side_effect=[round1_response, final_response])
+        
+        tool_manager.execute_tool = Mock(return_value="MCP course content")
+        
+        tools = [{"name": "search_course_content", "description": "Search"}]
+        
+        result = ai_generator.generate_response(
+            "What is MCP?",
+            tools=tools,
+            tool_manager=tool_manager,
+            max_tool_rounds=2
+        )
+        
+        # Should make only 2 API calls since Claude provided final answer in round 2
+        assert ai_generator.client.messages.create.call_count == 2
+        assert tool_manager.execute_tool.call_count == 1
+        assert result == "MCP stands for Model Context Protocol based on the search results."
+
+    def test_max_tool_rounds_parameter(self, ai_generator, mock_anthropic_client, tool_manager):
+        """Test that max_tool_rounds parameter is respected"""
+        # Always return tool use responses to test max rounds limit
+        tool_response = Mock()
+        tool_content = Mock()
+        tool_content.type = "tool_use"
+        tool_content.name = "search_course_content"
+        tool_content.id = "tool_123"
+        tool_content.input = {"query": "test"}
+        
+        tool_response.content = [tool_content]
+        tool_response.stop_reason = "tool_use"
+        
+        # Final response when max rounds reached
+        final_response = Mock()
+        final_response.content = [Mock()]
+        final_response.content[0].text = "Final answer after max rounds."
+        
+        # Return tool responses for rounds, then final response
+        ai_generator.client.messages.create = Mock(side_effect=[
+            tool_response, tool_response, tool_response, final_response
+        ])
+        
+        tool_manager.execute_tool = Mock(return_value="Tool result")
+        
+        tools = [{"name": "search_course_content", "description": "Search"}]
+        
+        result = ai_generator.generate_response(
+            "Test query",
+            tools=tools,
+            tool_manager=tool_manager,
+            max_tool_rounds=3  # Test with 3 rounds
+        )
+        
+        # Should make 4 API calls: 3 tool rounds + 1 final call
+        assert ai_generator.client.messages.create.call_count == 4
+        assert tool_manager.execute_tool.call_count == 3
+        assert result == "Final answer after max rounds."
+
+    def test_tool_execution_error_in_sequential_calling(self, ai_generator, mock_anthropic_client, tool_manager):
+        """Test error handling during sequential tool calling"""
+        # Round 1: Tool use
+        round1_response = Mock()
+        tool_content = Mock()
+        tool_content.type = "tool_use"
+        tool_content.name = "search_course_content"
+        tool_content.id = "tool_123"
+        tool_content.input = {"query": "test"}
+        
+        round1_response.content = [tool_content]
+        round1_response.stop_reason = "tool_use"
+        
+        ai_generator.client.messages.create = Mock(return_value=round1_response)
+        
+        # Mock tool manager to raise exception
+        tool_manager.execute_tool = Mock(side_effect=Exception("Database connection failed"))
+        
+        tools = [{"name": "search_course_content", "description": "Search"}]
+        
+        result = ai_generator.generate_response(
+            "Test query",
+            tools=tools,
+            tool_manager=tool_manager,
+            max_tool_rounds=2
+        )
+        
+        # Should only make 1 API call before error terminates the sequence
+        assert ai_generator.client.messages.create.call_count == 1
+        
+        # Should return error message instead of continuing
+        assert "I apologize, but I encountered an error while executing the requested tools." == result
+
+    def test_api_error_during_sequential_calling(self, ai_generator, mock_anthropic_client, tool_manager):
+        """Test API error handling during sequential tool calling"""
+        # Mock API to raise exception on first call
+        ai_generator.client.messages.create = Mock(side_effect=Exception("API rate limit exceeded"))
+        
+        tools = [{"name": "search_course_content", "description": "Search"}]
+        
+        result = ai_generator.generate_response(
+            "Test query",
+            tools=tools,
+            tool_manager=tool_manager,
+            max_tool_rounds=2
+        )
+        
+        # Should return graceful error message
+        assert "I apologize, but I encountered an error while processing your request" in result
+
 class TestAIGeneratorSystemPrompt:
     """Test system prompt functionality and tool selection guidance"""
 
@@ -321,7 +528,7 @@ class TestAIGeneratorSystemPrompt:
         # Check for tool selection guidance
         assert "Course outline queries" in prompt
         assert "Content search queries" in prompt
-        assert "One tool call per query maximum" in prompt
+        assert "Sequential tool calling" in prompt
 
     def test_response_guidelines(self):
         """Test that response guidelines are present"""
