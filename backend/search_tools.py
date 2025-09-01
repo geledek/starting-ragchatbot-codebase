@@ -168,10 +168,10 @@ class CourseOutlineTool(Tool):
         # Step 2: Get course metadata from the catalog
         try:
             results = self.store.course_catalog.get(ids=[resolved_course_title])
-            if not results or not results['metadatas']:
+            if not results or not results['metadatas'] or not results['metadatas'][0]:
                 return f"Course metadata not found for '{resolved_course_title}'"
             
-            metadata = results['metadatas'][0]
+            metadata = results['metadatas'][0][0]  # Access first metadata dictionary
             
             # Step 3: Extract course information
             course_title = metadata.get('title', resolved_course_title)

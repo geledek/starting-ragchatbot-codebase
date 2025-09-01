@@ -1,0 +1,129 @@
+{
+  "courses": [
+    {
+      "title": "MCP: Build Rich-Context AI Apps with Anthropic",
+      "instructor": "John Smith",
+      "course_link": "https://example.com/mcp-course",
+      "lesson_count": 3,
+      "lessons": [
+        {
+          "lesson_number": 1,
+          "lesson_title": "Introduction to MCP",
+          "lesson_link": "https://example.com/mcp-course/lesson-1"
+        },
+        {
+          "lesson_number": 2,
+          "lesson_title": "Building Your First MCP Server",
+          "lesson_link": "https://example.com/mcp-course/lesson-2"
+        },
+        {
+          "lesson_number": 3,
+          "lesson_title": "Advanced MCP Patterns",
+          "lesson_link": "https://example.com/mcp-course/lesson-3"
+        }
+      ]
+    },
+    {
+      "title": "Introduction to RAG Systems",
+      "instructor": "Jane Doe", 
+      "course_link": "https://example.com/rag-course",
+      "lesson_count": 2,
+      "lessons": [
+        {
+          "lesson_number": 1,
+          "lesson_title": "What is RAG?",
+          "lesson_link": "https://example.com/rag-course/lesson-1"
+        },
+        {
+          "lesson_number": 2,
+          "lesson_title": "Vector Databases and Embeddings",
+          "lesson_link": "https://example.com/rag-course/lesson-2"
+        }
+      ]
+    },
+    {
+      "title": "Building Chatbots with LLMs",
+      "instructor": "Alice Johnson",
+      "course_link": "https://example.com/chatbot-course",
+      "lesson_count": 4,
+      "lessons": [
+        {
+          "lesson_number": 1,
+          "lesson_title": "Chatbot Architecture",
+          "lesson_link": "https://example.com/chatbot-course/lesson-1"
+        },
+        {
+          "lesson_number": 2,
+          "lesson_title": "Natural Language Processing",
+          "lesson_link": "https://example.com/chatbot-course/lesson-2"
+        },
+        {
+          "lesson_number": 3,
+          "lesson_title": "Context Management",
+          "lesson_link": "https://example.com/chatbot-course/lesson-3"
+        },
+        {
+          "lesson_number": 4,
+          "lesson_title": "Deployment and Monitoring",
+          "lesson_link": "https://example.com/chatbot-course/lesson-4"
+        }
+      ]
+    }
+  ],
+  "content_chunks": [
+    {
+      "course_title": "MCP: Build Rich-Context AI Apps with Anthropic",
+      "lesson_number": 1,
+      "chunk_index": 0,
+      "content": "MCP (Model Context Protocol) is a revolutionary approach to building AI applications. It allows for rich context sharing between different AI models and systems, enabling more sophisticated and contextually aware applications."
+    },
+    {
+      "course_title": "MCP: Build Rich-Context AI Apps with Anthropic",
+      "lesson_number": 1,
+      "chunk_index": 1,
+      "content": "The key benefits of MCP include improved context retention, better model coordination, enhanced application performance, and reduced hallucination in AI responses."
+    },
+    {
+      "course_title": "MCP: Build Rich-Context AI Apps with Anthropic",
+      "lesson_number": 2,
+      "chunk_index": 2,
+      "content": "To build your first MCP server, you need to understand the protocol specifications and implement the required interfaces. This includes setting up connection handlers, message routing, and context management."
+    },
+    {
+      "course_title": "MCP: Build Rich-Context AI Apps with Anthropic",
+      "lesson_number": 2,
+      "chunk_index": 3,
+      "content": "MCP servers can be implemented in various programming languages. Python is a popular choice due to its extensive ecosystem and ease of development."
+    },
+    {
+      "course_title": "Introduction to RAG Systems",
+      "lesson_number": 1,
+      "chunk_index": 0,
+      "content": "RAG (Retrieval-Augmented Generation) combines information retrieval with text generation to create more accurate and contextual AI responses. It addresses the limitation of large language models in accessing up-to-date information."
+    },
+    {
+      "course_title": "Introduction to RAG Systems",
+      "lesson_number": 1,
+      "chunk_index": 1,
+      "content": "The RAG process involves three main steps: retrieval of relevant documents, augmentation of the prompt with retrieved context, and generation of the final response using the augmented prompt."
+    },
+    {
+      "course_title": "Introduction to RAG Systems",
+      "lesson_number": 2,
+      "chunk_index": 2,
+      "content": "Vector databases are essential for RAG systems. They store document embeddings and enable semantic search, allowing the system to find relevant information based on meaning rather than just keyword matching."
+    },
+    {
+      "course_title": "Building Chatbots with LLMs",
+      "lesson_number": 1,
+      "chunk_index": 0,
+      "content": "Modern chatbot architecture typically consists of multiple components: natural language understanding (NLU), dialogue management, natural language generation (NLG), and integration layers."
+    },
+    {
+      "course_title": "Building Chatbots with LLMs",
+      "lesson_number": 3,
+      "chunk_index": 1,
+      "content": "Context management in chatbots is crucial for maintaining conversation flow. This includes tracking conversation history, user preferences, and session state across multiple interactions."
+    }
+  ]
+}
