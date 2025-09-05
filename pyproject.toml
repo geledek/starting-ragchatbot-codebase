@@ -20,4 +20,27 @@ test = [
     "pytest-asyncio>=1.1.0",
     "pytest-cov>=6.2.1",
     "pytest-mock>=3.14.1",
+    "httpx>=0.27.0",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=backend",
+    "--cov-report=term-missing",
+    "--cov-report=html:htmlcov",
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests", 
+    "api: API endpoint tests",
+    "slow: Slow tests that may be skipped in CI",
+]
+asyncio_mode = "auto"
