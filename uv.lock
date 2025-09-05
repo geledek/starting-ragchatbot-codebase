@@ -1817,6 +1817,7 @@ dev = [
     { name = "mypy" },
 ]
 test = [
+    { name = "httpx" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
@@ -1842,6 +1843,7 @@ dev = [
     { name = "mypy", specifier = ">=1.17.1" },
 ]
 test = [
+    { name = "httpx", specifier = ">=0.27.0" },
     { name = "pytest", specifier = ">=8.4.1" },
     { name = "pytest-asyncio", specifier = ">=1.1.0" },
     { name = "pytest-cov", specifier = ">=6.2.1" },
