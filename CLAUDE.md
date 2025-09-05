@@ -26,6 +26,31 @@ uv sync
 uv add <package-name>
 ```
 
+### Code Quality & Formatting
+```bash
+# Essential pre-commit checks (recommended)
+./scripts/pre-commit-check.sh
+
+# Format code (Black + isort)
+./scripts/format.sh
+
+# Check linting (flake8)
+./scripts/lint.sh
+
+# Run type checking (mypy)
+./scripts/typecheck.sh
+
+# Run comprehensive quality checks
+./scripts/quality-check.sh
+
+# Manual commands
+uv run black backend/          # Format with Black
+uv run isort backend/          # Sort imports
+uv run flake8 backend/         # Lint code
+uv run mypy backend/           # Type check
+uv run pytest backend/tests/   # Run tests
+```
+
 ### Development Server
 - Web Interface: http://localhost:8000
 - API Documentation: http://localhost:8000/docs
